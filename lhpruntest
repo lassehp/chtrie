@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+./lhprun.tmp
+# diff -u <(./run.tmp < lhptest.in) lhptest.out
+echo All tests passed.

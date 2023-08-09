@@ -3,6 +3,10 @@
 #include <limits.h>
 #include <errno.h>
 #include "chtrie.h"
+#include <readline/readline.h>
+#include "log_malloc.h"
+#include "marktime.h"
+
 #define SZ_MAX ((size_t)-1)
 #define MIN(x, y) ((x)<(y)?(x):(y))
 
@@ -20,15 +24,21 @@ chtrie *chtrie_alloc(size_t n, size_t m)
 		errno = ERANGE;
 		goto err;
 	}
-	if (!(tr = calloc(1, sizeof *tr)))
+	if (!(tr = calloc(1, sizeof *tr))) {
+		fprintf(stderr, "calloc failed in chtrie_alloc. calloc(1, sizeof *tr=%d)\n", sizeof *tr);
 		goto err;
+	}
 	tr->maxn = n;
 	tr->alphsz = m;
 	tr->ecap = (n-1) + (n-1)/3;
-	if (!(tr->etab = calloc(tr->ecap, sizeof tr->etab[0])))
+	if (!(tr->etab = calloc(tr->ecap, sizeof tr->etab[0]))) {
+		fprintf(stderr, "calloc failed in chtrie_alloc. calloc(tr->ecap=%d, sizeof tr->etab[0]=%d)\n", tr->ecap, sizeof tr->etab[0]);
 		goto free_tr;
-	if (!(tr->idxpool = calloc(n, sizeof tr->idxpool[0])))
+	}
+	if (!(tr->idxpool = calloc(n, sizeof tr->idxpool[0]))) {
+		fprintf(stderr, "calloc failed in chtrie_alloc. calloc(n=%d, sizeof *tri->idxpool[0]=%d)\n", n, sizeof tr->idxpool[0]);
 		goto free_ecap;
+	}
 	tr->idxmax = 1;
 	tr->idxptr = tr->idxpool;
 	return tr;
@@ -52,11 +62,14 @@ int chtrie_walk(chtrie *tr, int from, int sym, int creat)
 			return p->to;
 	if (creat) {
 		if (tr->idxptr == tr->idxpool && tr->idxmax >= tr->maxn) {
+			fprintf(stderr, "internal allocation failed in chtrie_walk. tr->idxmax=%d tr->maxn=%d\n", tr->idxmax, tr->maxn);
 			errno = ENOMEM;
 			return -1;
 		}
-		if (!(p = malloc(sizeof *p)))
+		if (!(p = malloc(sizeof *p))) {
+			fprintf(stderr, "malloc failed in chtrie_walk. sizeof *p = %d\n", sizeof *p);
 			return -1;
+		}
 		p->next = tr->etab[h];
 		tr->etab[h] = p;
 		p->from = from;
